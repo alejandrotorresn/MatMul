@@ -4,38 +4,38 @@
     argv[] ->   K: columns of A and rows of B
     argv[] ->   newMatrix: if 1 create new values of matrix A and B. If 0 read from file
     argv[] ->   iter: number if iterations of matrix multiplications
-    argv[] ->   printOp: if 1 print.
+    argv[] ->   prsize_tOp: if 1 prsize_t.
 */
 #include <iostream>
 #include <bits/stdc++.h>
 #include <sys/time.h>
 #include "MatMul.h"
 
-#define BLOCK_DIM 64
+#define BLOCK_DIM 16
 
 using namespace std;
 
-bool verification(const float *C_cpu, const float *C_gpu, int length);
-void mulMat(const float *A, const float *B, float *C, int N, int M, int K);
+bool verification(const float *C_cpu, const float *C_gpu, size_t length);
+void mulMat(const float *A, const float *B, float *C, size_t N, size_t M, size_t K);
 
-__global__ void matMul_cuda(const float *A, const float *B, float *C, int M, int N, int K, const int block_D);
+__global__ void matMul_cuda(const float *A, const float *B, float *C, size_t M, size_t N, size_t K);
 
 int main(int argc, char **argv) {
 
     float *matA, *matB, *matC;
     //float *matC_cpu;
     float *d_A, *d_B, *d_C;
-    int N, M, K;
-    int newMatrix;
-    int iter;
-    int printOp;
+    size_t N, M, K;
+    size_t newMatrix;
+    size_t iter;
+    size_t prsize_tOp;
 
     N = atoi(argv[1]);
     M = atoi(argv[2]);
     K = atoi(argv[3]);
     newMatrix = atoi(argv[4]);
     iter = atoi(argv[5]);
-    printOp = atoi(argv[6]);
+    prsize_tOp = atoi(argv[6]);
 
     // Timer
     struct timeval start, end;
@@ -75,18 +75,18 @@ int main(int argc, char **argv) {
     cudaMemcpy(d_A, matA, M * K * sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(d_B, matB, K * N * sizeof(float), cudaMemcpyHostToDevice);
 
-    int block_D;
+    /*size_t block_D;
 
     if (K < BLOCK_DIM)
         block_D = K;
     else
-        block_D = BLOCK_DIM;
+        block_D = BLOCK_DIM;*/
 
-    dim3 blockDim(block_D, block_D);
-    dim3 gridDim((N + block_D - 1)/block_D, (M + block_D - 1)/block_D);
+    const dim3 blockDim(BLOCK_DIM, BLOCK_DIM);
+    const dim3 gridDim((N + BLOCK_DIM - 1)/BLOCK_DIM, (M + BLOCK_DIM - 1)/BLOCK_DIM);
     
-    for (int i=0; i<iter; i++) {
-        matMul_cuda<<<gridDim, blockDim>>>(d_A, d_B, d_C, M, N, K, block_D);
+    for (size_t i=0; i<iter; i++) {
+        matMul_cuda<<<gridDim, blockDim>>>(d_A, d_B, d_C, M, N, K);
         cudaDeviceSynchronize();
     }
     
@@ -108,18 +108,18 @@ int main(int argc, char **argv) {
     // verification
     /*mulMat(matA, matB, matC_cpu, M, N, K);
     cout << endl << "CPU" << endl;
-    printMat(matC_cpu, M, N);
+    prsize_tMat(matC_cpu, M, N);
 
     cout << endl << "GPU" << endl;
-    if (printOp == 1)
-        printMat(matC, N, M);
+    if (prsize_tOp == 1)
+        prsize_tMat(matC, N, M);
 
     if (verification(matC, matC_cpu, M*N))
-        printf("SUCCESS!!\n");
+        prsize_tf("SUCCESS!!\n");
     else
-        printf("Error\n");*/
+        prsize_tf("Error\n");*/
 
-    if (printOp == 1)
+    if (prsize_tOp == 1)
         printMat(matC, N, M);
 
     cudaFree(d_A);
@@ -134,10 +134,10 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-bool verification(const float *C_cpu, const float *C_gpu, int length) {
+bool verification(const float *C_cpu, const float *C_gpu, size_t length) {
     float epsilon = 0.001;
     float error = 0.f;
-    for (int i=0; i<length; i++) {
+    for (size_t i=0; i<length; i++) {
         error += (abs(C_gpu[i] - C_cpu[i])/abs(C_cpu[i]))*100;
         if (abs(C_cpu[i] - C_gpu[i]) >= epsilon) {
             cout << "Error: " << error/length << endl;
@@ -148,46 +148,46 @@ bool verification(const float *C_cpu, const float *C_gpu, int length) {
     return true;
 }
 
-__global__ void matMul_cuda(const float *A, const float *B, float *C, int M, int N, int K, const int block_D) {
-    int bid_x = blockIdx.x * blockDim.x;
-    int bid_y = blockIdx.y * blockDim.y;
-    int tid_x = threadIdx.x;
-    int tid_y = threadIdx.y;
+__global__ void matMul_cuda(const float *A, const float *B, float *C, size_t M, size_t N, size_t K) {
+    size_t bid_x = blockIdx.x; //* blockDim.x;
+    size_t bid_y = blockIdx.y; //* blockDim.y;
+    size_t tid_x = threadIdx.x;
+    size_t tid_y = threadIdx.y;
 
     float element_c = 0.f;
 
     __shared__ float s_tile_A[BLOCK_DIM][BLOCK_DIM];
     __shared__ float s_tile_B[BLOCK_DIM][BLOCK_DIM];
 
-    int aBegin = K * block_D * bid_y;
-    int aEnd = aBegin + K - 1;
-    int aStep = block_D;
+    size_t aBegin = K * BLOCK_DIM * bid_y;
+    size_t aEnd = aBegin + K - 1;
+    size_t aStep = BLOCK_DIM;
 
-    int bBegin = block_D * bid_x;
-    int bStep = block_D * N;
+    size_t bBegin = BLOCK_DIM * bid_x;
+    size_t bStep = BLOCK_DIM * N;
 
-    for (int i=aBegin, j=bBegin; i<=aEnd; i+=aStep, j+=bStep) {
+    for (size_t i=aBegin, j=bBegin; i<=aEnd; i+=aStep, j+=bStep) {
         s_tile_A[tid_y][tid_x] = A[i + K * tid_y + tid_x];
-        s_tile_B[tid_x][tid_y] = B[j + N * tid_x + tid_y];
+        s_tile_B[tid_y][tid_x] = B[j + N * tid_y + tid_x];
 
         __syncthreads();
 
-        for (int k=0; k<block_D; ++k) {
+        for (size_t k=0; k<BLOCK_DIM; ++k) {
             element_c += s_tile_A[tid_y][k] * s_tile_B[k][tid_x];
         }
 
         __syncthreads();
     }
-    int cIdx = N * block_D * bid_y + block_D * bid_x;
+    size_t cIdx = N * BLOCK_DIM * bid_y + BLOCK_DIM * bid_x;
 
     C[cIdx + N * tid_y + tid_x] = element_c;
 }
 
-void mulMat(const float *A, const float *B, float *C, int N, int M, int K) {
-    for (int row=0; row<M; row++) {
-        for (int col=0; col<N; col++) {
+void mulMat(const float *A, const float *B, float *C, size_t N, size_t M, size_t K) {
+    for (size_t row=0; row<M; row++) {
+        for (size_t col=0; col<N; col++) {
             float element_c = 0.f;
-            for (int e=0; e<K; e++) {
+            for (size_t e=0; e<K; e++) {
                 element_c += A[row * K + e] * B[e * N + col];
             }
             C[row * N + col] = element_c;

@@ -57,11 +57,6 @@ int main(int argc, char **argv) {
     matC = (float *)malloc(M * N * sizeof(float));
     //matC_cpu = (float *)malloc(M * N * sizeof(float));
 
-    // allocation memory space
-    cudaMalloc((void **)&d_A, M * K * sizeof(float));
-    cudaMalloc((void **)&d_B, K * N * sizeof(float));
-    cudaMalloc((void **)&d_C, M * N * sizeof(float));
-
     if ( newMatrix == 1 ) {
         // Create randomized values and save them to file
         random_init(matA, M * K, true);
@@ -81,22 +76,34 @@ int main(int argc, char **argv) {
 
     // start timer
     gettimeofday(&start, NULL);
+    
+    for (size_t i=0; i<iter; i++) {
 
-    cudaStat = cudaStreamCreate(&stream);
+        // allocation memory space
+        cudaMalloc((void **)&d_A, M * K * sizeof(float));
+        cudaMalloc((void **)&d_B, K * N * sizeof(float));
+        cudaMalloc((void **)&d_C, M * N * sizeof(float));
 
-    cublasSetMatrixAsync(M, K, sizeof(*d_A), matA, M, d_A, M, stream);
-    cublasSetMatrixAsync(K, N, sizeof(*d_B), matB, K, d_B, K, stream);
-    cublasSetMatrixAsync(M, N, sizeof(*d_C), matC, M, d_C, M, stream);
+        cudaStat = cudaStreamCreate(&stream);
 
-    cublasSetStream(handle, stream);
+        cublasSetMatrixAsync(M, K, sizeof(*d_A), matA, M, d_A, M, stream);
+        cublasSetMatrixAsync(K, N, sizeof(*d_B), matB, K, d_B, K, stream);
+        cublasSetMatrixAsync(M, N, sizeof(*d_C), matC, M, d_C, M, stream);
 
-    cublasSgemm(handle, CUBLAS_OP_T, CUBLAS_OP_T, M, N, K, &alpha, d_A, M, d_B, K, &beta, d_C, M);
+        cublasSetStream(handle, stream);
 
-    cublasGetMatrixAsync(M, N, sizeof(*d_C), d_C, M, matC, M, stream);
-    cudaStreamSynchronize(stream);
+        cublasSgemm(handle, CUBLAS_OP_T, CUBLAS_OP_T, M, N, K, &alpha, d_A, M, d_B, K, &beta, d_C, M);
 
-    cublasDestroy(handle);
-    cudaStreamDestroy(stream);
+        cublasGetMatrixAsync(M, N, sizeof(*d_C), d_C, M, matC, M, stream);
+        cudaStreamSynchronize(stream);
+
+        cublasDestroy(handle);
+        cudaStreamDestroy(stream);
+
+        cudaFree(d_A);
+        cudaFree(d_B);
+        cudaFree(d_C);
+    }
 
     // end timer
     gettimeofday(&end, NULL);
@@ -107,15 +114,11 @@ int main(int argc, char **argv) {
     time_taken = (time_taken + (end.tv_usec - start.tv_usec)) * 1e-6;
 
     cout << endl;
-    cout << "       Total time: " << fixed << time_taken << setprecision(6);
+    cout << "       Total time: " << fixed << time_taken/iter << setprecision(6);
     cout << " sec." << endl;
 
     if (printOp == 1)
         printMat(matC, N, M);
-
-    cudaFree(d_A);
-    cudaFree(d_B);
-    cudaFree(d_C);
 
     free(matA);
     free(matB);

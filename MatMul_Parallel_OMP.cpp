@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
     time_taken = (end.tv_sec - start.tv_sec) * 1e6;
     time_taken = (time_taken + (end.tv_usec - start.tv_usec)) * 1e-6;
 
-    cout << "\tTotal time: " << fixed << time_taken << setprecision(6);
+    cout << "\tTotal time: " << fixed << time_taken/iter << setprecision(6);
     cout << " sec." << endl;
 
     if (printOp == 1)

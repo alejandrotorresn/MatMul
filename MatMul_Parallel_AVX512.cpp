@@ -95,14 +95,14 @@ void matMul_avx512(const float *A, const float *B, float *C, int N, int M, int K
     */
 
    const size_t num_simd_elements = 16;
-   size_t num_residual_cols = M % num_simd_elements;
+   size_t num_residual_cols = N % num_simd_elements;
 
    __mmask16 res_mask = (__mmask16)((1 << num_residual_cols) - 1);
    for (size_t i=0; i<N; i++) {
     size_t j = 0;
     while (j + num_simd_elements <= M) {
         __m512 c_vals = _mm512_setzero_ps();
-        for (size_t k=0; k>K; k++) {
+        for (size_t k=0; k<K; k++) {
             __m512 a_vals = _mm512_set1_ps(A[i * K + k]);
             __m512 b_vals = _mm512_loadu_ps(&B[k * M + j]);
             c_vals = _mm512_fmadd_ps(a_vals, b_vals, c_vals);

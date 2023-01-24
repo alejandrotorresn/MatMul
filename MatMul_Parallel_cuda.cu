@@ -73,28 +73,34 @@ int main(int argc, char **argv) {
         else
             block_D = BLOCK_DIM;*/
 
-    // allocation memory space
-    cudaMalloc((void **)&d_A, M * K * sizeof(float));
-    cudaMalloc((void **)&d_B, K * N * sizeof(float));
-    cudaMalloc((void **)&d_C, M * N * sizeof(float));
-
-    // copy initial value for gpu  memory
-    cudaMemcpy(d_A, matA, M * K * sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_B, matB, K * N * sizeof(float), cudaMemcpyHostToDevice);
-
     // start timer
     gettimeofday(&start, NULL);
 
     for (size_t i=0; i<iter; i++) {
+
+        // allocation memory space
+        cudaMalloc((void **)&d_A, M * K * sizeof(float));
+        cudaMalloc((void **)&d_B, K * N * sizeof(float));
+        cudaMalloc((void **)&d_C, M * N * sizeof(float));
+
+        // copy initial value for gpu  memory
+        cudaMemcpy(d_A, matA, M * K * sizeof(float), cudaMemcpyHostToDevice);
+        cudaMemcpy(d_B, matB, K * N * sizeof(float), cudaMemcpyHostToDevice);
+
         matMul_cuda<<<gridDim, blockDim>>>(d_A, d_B, d_C, M, N, K);
         cudaDeviceSynchronize();
+    
+        // copy data from the gpu
+        cudaMemcpy(matC, d_C, M * N * sizeof(float), cudaMemcpyDeviceToHost);
+        
+        cudaFree(d_A);
+        cudaFree(d_B);
+        cudaFree(d_C);
     }
-
+    
     // end timer
     gettimeofday(&end, NULL);
 
-    // copy data from the gpu
-    cudaMemcpy(matC, d_C, M * N * sizeof(float), cudaMemcpyDeviceToHost);
     
     
 
@@ -128,10 +134,6 @@ int main(int argc, char **argv) {
     free(matB);
     free(matC);
     //free(matC_cpu);
-
-    cudaFree(d_A);
-    cudaFree(d_B);
-    cudaFree(d_C);
 
     return 0;
 }

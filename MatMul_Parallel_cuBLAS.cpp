@@ -74,38 +74,40 @@ int main(int argc, char **argv) {
     // unsync the I/O of C and C++
     ios_base::sync_with_stdio(false);
 
-    // allocation memory space
-    cudaMalloc((void **)&d_A, M * K * sizeof(float));
-    cudaMalloc((void **)&d_B, K * N * sizeof(float));
-    cudaMalloc((void **)&d_C, M * N * sizeof(float));
-
-    cudaStat = cudaStreamCreate(&stream);
-
-    cublasSetMatrixAsync(M, K, sizeof(*d_A), matA, M, d_A, M, stream);
-    cublasSetMatrixAsync(K, N, sizeof(*d_B), matB, K, d_B, K, stream);
-    cublasSetMatrixAsync(M, N, sizeof(*d_C), matC, M, d_C, M, stream);
-
-    cublasSetStream(handle, stream);
-    
     // start timer
     gettimeofday(&start, NULL);
 
     for (size_t i=0; i<iter; i++) {
+
+        // allocation memory space
+        cudaMalloc((void **)&d_A, M * K * sizeof(float));
+        cudaMalloc((void **)&d_B, K * N * sizeof(float));
+        cudaMalloc((void **)&d_C, M * N * sizeof(float));
+
+        cudaStat = cudaStreamCreate(&stream);
+
+        cublasSetMatrixAsync(M, K, sizeof(*d_A), matA, M, d_A, M, stream);
+        cublasSetMatrixAsync(K, N, sizeof(*d_B), matB, K, d_B, K, stream);
+        cublasSetMatrixAsync(M, N, sizeof(*d_C), matC, M, d_C, M, stream);
+
+        cublasSetStream(handle, stream);
+    
         cublasSgemm(handle, CUBLAS_OP_T, CUBLAS_OP_T, M, N, K, &alpha, d_A, M, d_B, K, &beta, d_C, M);
+        
+        cublasGetMatrixAsync(M, N, sizeof(*d_C), d_C, M, matC, M, stream);
+        cudaStreamSynchronize(stream);
+
+        cublasDestroy(handle);
+        cudaStreamDestroy(stream);
+
+        cudaFree(d_A);
+        cudaFree(d_B);
+        cudaFree(d_C);
+    
     }
 
     // end timer
     gettimeofday(&end, NULL);
-
-    cublasGetMatrixAsync(M, N, sizeof(*d_C), d_C, M, matC, M, stream);
-    cudaStreamSynchronize(stream);
-
-    cublasDestroy(handle);
-    cudaStreamDestroy(stream);
-
-    cudaFree(d_A);
-    cudaFree(d_B);
-    cudaFree(d_C);
 
     // Calculating total time taken
     double time_taken;

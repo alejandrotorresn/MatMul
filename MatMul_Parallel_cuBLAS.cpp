@@ -42,12 +42,7 @@ int main(int argc, char **argv) {
     alpha = 1.f;
     beta = 1.f;
 
-    stat = cublasCreate(&handle);
-    if (stat != CUBLAS_STATUS_SUCCESS) {
-        cout << "CUBLAS initialization failed" << endl;
-        return EXIT_FAILURE;
-    }
-
+    
     // Timer
     struct timeval start, end;
 
@@ -78,6 +73,13 @@ int main(int argc, char **argv) {
     gettimeofday(&start, NULL);
 
     for (size_t i=0; i<iter; i++) {
+
+        stat = cublasCreate(&handle);
+        if (stat != CUBLAS_STATUS_SUCCESS) {
+            cout << "CUBLAS initialization failed" << endl;
+            return EXIT_FAILURE;
+        }
+
 
         // allocation memory space
         cudaMalloc((void **)&d_A, M * K * sizeof(float));

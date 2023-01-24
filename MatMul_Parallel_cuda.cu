@@ -66,40 +66,37 @@ int main(int argc, char **argv) {
     const dim3 blockDim(BLOCK_DIM, BLOCK_DIM);
     const dim3 gridDim((N + BLOCK_DIM - 1)/BLOCK_DIM, (M + BLOCK_DIM - 1)/BLOCK_DIM);
     
-    // start timer
-    gettimeofday(&start, NULL);
-
-    for (size_t i=0; i<iter; i++) {
-
-        // allocation memory space
-        cudaMalloc((void **)&d_A, M * K * sizeof(float));
-        cudaMalloc((void **)&d_B, K * N * sizeof(float));
-        cudaMalloc((void **)&d_C, M * N * sizeof(float));
-
-        // copy initial value for gpu  memory
-        cudaMemcpy(d_A, matA, M * K * sizeof(float), cudaMemcpyHostToDevice);
-        cudaMemcpy(d_B, matB, K * N * sizeof(float), cudaMemcpyHostToDevice);
-
-        /*size_t block_D;
+    /*size_t block_D;
 
         if (K < BLOCK_DIM)
             block_D = K;
         else
             block_D = BLOCK_DIM;*/
 
+    // allocation memory space
+    cudaMalloc((void **)&d_A, M * K * sizeof(float));
+    cudaMalloc((void **)&d_B, K * N * sizeof(float));
+    cudaMalloc((void **)&d_C, M * N * sizeof(float));
+
+    // copy initial value for gpu  memory
+    cudaMemcpy(d_A, matA, M * K * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_B, matB, K * N * sizeof(float), cudaMemcpyHostToDevice);
+
+    // start timer
+    gettimeofday(&start, NULL);
+
+    for (size_t i=0; i<iter; i++) {
         matMul_cuda<<<gridDim, blockDim>>>(d_A, d_B, d_C, M, N, K);
         cudaDeviceSynchronize();
-    
-        // copy data from the gpu
-        cudaMemcpy(matC, d_C, M * N * sizeof(float), cudaMemcpyDeviceToHost);
-
-        cudaFree(d_A);
-        cudaFree(d_B);
-        cudaFree(d_C);
     }
-    
+
     // end timer
     gettimeofday(&end, NULL);
+
+    // copy data from the gpu
+    cudaMemcpy(matC, d_C, M * N * sizeof(float), cudaMemcpyDeviceToHost);
+    
+    
 
     // Calculating total time taken
     double time_taken;
@@ -131,6 +128,10 @@ int main(int argc, char **argv) {
     free(matB);
     free(matC);
     //free(matC_cpu);
+
+    cudaFree(d_A);
+    cudaFree(d_B);
+    cudaFree(d_C);
 
     return 0;
 }

@@ -213,59 +213,50 @@ int cuda::cublas_sgemmTensor(const float* matA, const float* matB, float* matC,
                         const int& M,  const int& N,  const int& K, 
                         const dim3 blockDim, const dim3 gridDim) {
 
-    float *A_fp32, *B_fp32, *C_fp32; 
-    half *A_fp16, *B_fp16;
-    
+    cudaError_t cudaStat;
+    cublasStatus_t stat;
+    cublasHandle_t handle;
+    cudaStream_t stream;
+
+    float *d_A, *d_B, *d_C;
     float alpha, beta;
 
     alpha = 1.f;
     beta = 0.f;
-    
-    cublasHandle_t cublasHandle;
 
-    cublasStatus_t cublasStat = cublasCreate(&cublasHandle);
-    if ( cublasStat != CUBLAS_STATUS_SUCCESS ) {
+    stat = cublasCreate(&handle);
+    if ( stat != CUBLAS_STATUS_SUCCESS ) {
         std::cout << "CUBLAS initialization failed!\n";
         return EXIT_FAILURE;
     }
-     // Use tensor cores
-    // Set the math mode to allow cuBLAS to use Tensor Cores:
-    cublasStat = cublasSetMathMode(cublasHandle, CUBLAS_TENSOR_OP_MATH);
     
     // allocation memory space
-    cudaMalloc((void **)&A_fp32, M * K * sizeof(float));
-    cudaMalloc((void **)&B_fp32, K * N * sizeof(float));
-    cudaMalloc((void **)&C_fp32, M * N * sizeof(float));
-    cudaMalloc((void **)&A_fp16, M * K * sizeof(half));
-    cudaMalloc((void **)&B_fp16, K * N * sizeof(half));
+    cudaMalloc((void **)&d_A, M * K * sizeof(float));
+    cudaMalloc((void **)&d_B, K * N * sizeof(float));
+    cudaMalloc((void **)&d_C, M * N * sizeof(float));
 
-    cudaMemcpy(A_fp32, matA, M * K * sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(B_fp32, matB, K * N * sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(C_fp32, matC, M * N * sizeof(float), cudaMemcpyHostToDevice);
+    cudaStat = cudaStreamCreate(&stream);
+    stat = cublasSetMathMode(handle, CUBLAS_TENSOR_OP_MATH);
 
-    //convertFp32ToFp16<<<(M * K + 255) / 256, 256>>>(A_fp16, A_fp32, M * K);
-    //convertFp32ToFp16<<<(M * K + 255) / 256, 256>>>(B_fp16, B_fp32, K * N);
+    cublasSetMatrixAsync(M, K, sizeof(*d_A), matA, M, d_A, M, stream);
+    cublasSetMatrixAsync(K, N, sizeof(*d_B), matB, K, d_B, K, stream);
+    cublasSetMatrixAsync(M, N, sizeof(*d_C), matC, M, d_C, M, stream);
 
-    cublasStat = cublasGemmEx(cublasHandle, CUBLAS_OP_N, CUBLAS_OP_N, 
-                            M, N, K, 
-                            &alpha,
-                            A_fp32, CUDA_R_32F, M,
-                            B_fp32, CUDA_R_32F, K,
-                            &beta,
-                            C_fp32, CUDA_R_32F, M, 
-                            CUDA_R_32F, CUBLAS_GEMM_DEFAULT_TENSOR_OP);
+    cublasSetStream(handle, stream);
 
-    cudaDeviceSynchronize();
-    cudaMemcpy(matC, C_fp32, M * N * sizeof(float), cudaMemcpyDeviceToHost);
+    stat = cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, M, N, K, &alpha, d_B, N,
+                        d_A, K, &beta, d_C, N);
 
-    cublasDestroy(cublasHandle);
+    cublasGetMatrixAsync(M, N, sizeof(*d_C), d_C, M, matC, M, stream);
+    cudaStreamSynchronize(stream);
 
-    cudaFree(A_fp32);
-    cudaFree(B_fp32);
-    cudaFree(C_fp32);
-    cudaFree(A_fp16);
-    cudaFree(B_fp16);
-    
+    cublasDestroy(handle);
+    cudaStreamDestroy(stream);
+
+    cudaFree(d_A);
+    cudaFree(d_B);
+    cudaFree(d_C);
 
     return EXIT_SUCCESS;
+    
 }

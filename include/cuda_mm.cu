@@ -59,13 +59,6 @@ __global__ void sgemm_tiled(const float *matA, const float *matB, float *matC,
 
 }
 
-__global__ void convertFp32ToFp16 (half *out, float *in, int n) {
-    int idx = blockDim.x * blockIdx.x + threadIdx.x;
-    if (idx < n) {
-        out[idx] = __float2half( in[idx] );
-        //printf("%f : %f \n", in[idx], __half2float(out[idx]) );
-        }
-}
 
 void cuda::cuda_sgemm_naive(const float* matA, const float* matB, float* matC, 
                     const int& M, const int& N, const int& K, 

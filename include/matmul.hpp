@@ -83,7 +83,7 @@ namespace matmul {
             q.submit([&](sycl::handler& h) {
                 sycl::accessor a{a_buf, h, sycl::read_only};
                 sycl::accessor b{b_buf, h, sycl::read_only};
-                sycl::accessor c{c_buf, h};
+                sycl::accessor c{c_buf, h, sycl::no_init};
 
                 // Create matrix tiles
                 sycl::accessor<float, 2, sycl::access::mode::read_write, sycl::access::target::local> aTile(sycl::range<2>(MATRIXTILESIZE, MATRIXTILESIZE), h);
@@ -131,7 +131,7 @@ namespace matmul {
             q.submit([&](sycl::handler& h) {
                 sycl::accessor a{a_buf, h, sycl::read_only};
                 sycl::accessor b{b_buf, h, sycl::read_only};
-                sycl::accessor c{c_buf, h};
+                sycl::accessor c{c_buf, h, sycl::no_init};
 
                 // Create matrix tiles
                 sycl::accessor<float, 2, sycl::access::mode::read_write, sycl::access::target::local> aTile(sycl::range<2>(MATRIXTILESIZE, MATRIXTILESIZE), h);

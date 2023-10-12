@@ -1,8 +1,8 @@
 /*
     Matrix Multiplication Tests
     module load mkl/latest icc/latest compiler/latest 
-    icpx -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl  -DMKL_ILP64  -m64 -qopenmp -ljsoncpp -I"${MKLROOT}/include" -O3 -mavx2 -mfma matMul.cpp -o matMul
-    icpx -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl  -DMKL_ILP64  -m64 -qopenmp -ljsoncpp -I"${MKLROOT}/include" -O3 -mavx2 -mfma -mavx512f -mavx512vl -mavx512bw -mavx512dq  matMul.cpp -o matMul
+    icpx -fsycl -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl  -DMKL_ILP64  -m64 -qopenmp -ljsoncpp -I"${MKLROOT}/include" -O3 -mavx2 -mfma matMul.cpp -o matMul
+    icpx -fsycl -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl  -DMKL_ILP64  -m64 -qopenmp -ljsoncpp -I"${MKLROOT}/include" -O3 -mavx2 -mfma -mavx512f -mavx512vl -mavx512bw -mavx512dq  matMul.cpp -o matMul
 */
 #include <iostream>
 #include <fstream>
@@ -20,9 +20,10 @@ int main() {
     float *matA, *matB, *matC, *matD, *matE, *matF, *matG;
     int rowsA, colsA;
     int rowsB, colsB;
-    auto t1 = std::chrono::steady_clock::now();
-    auto t2 = std::chrono::steady_clock::now();
+    auto t1 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+    auto t2 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     int N;
+    double time;
 
     std::ofstream results;
     results.open("../results/results_cpu.json");
@@ -57,55 +58,70 @@ int main() {
         matrix::readMat(pathB.data(), matB, rowsB, colsB);
 
         // Serial
-        t1 = std::chrono::steady_clock::now();
+        time = 0.0;
         for ( size_t i = 0; i < iter; i++ ) {
             matrix::init_zero(matC, N, N);
+            t1 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
             matmul::serialNaive(matA, matB, matC, N, N, N);
+            t2 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+            time += (double)(t2 - t1)/1e+6;
         }   
-        t2 = std::chrono::steady_clock::now();
+        
         //std::cout << std::setw(14) << std::fixed << std::setprecision(4) << "Serial (ms): " << (double)std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()/1000.0f/iter << "\n";
-        out_results["Times"]["serial"][std::to_string(N)]["time"] = ( (double)std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()/1000.0f ) / iter;
+        out_results["Times"]["serial"][std::to_string(N)]["time"] = (time)/iter;
 
         // OpenMP
-        t1 = std::chrono::steady_clock::now();
+        time = 0.0;
         for ( size_t i = 0; i < iter; i++ ) {
             matrix::init_zero(matD, N, N);
+            t1 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
             matmul::ompNaive(matA, matB, matD, N, N, N);
+            t2 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+            time += (double)(t2 - t1)/1e+6;
         }
-        t2 = std::chrono::steady_clock::now();
+        
         //std::cout << std::setw(14) << std::fixed << std::setprecision(4) << "OpenMP (ms): " << (double)std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()/1000.0f/iter << "\n";
-        out_results["Times"]["openMP"][std::to_string(N)]["time"] = ( (double)std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()/1000.0f ) / iter;
+        out_results["Times"]["openMP"][std::to_string(N)]["time"] = (time)/iter;
 
         // AVX2
-        t1 = std::chrono::steady_clock::now();
+        time = 0.0;
         for ( size_t i = 0; i < iter; i++ ) {
             matrix::init_zero(matE, N, N);
+            t1 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
             matmul::avx2_omp(matA, matB, matE, N, N, N);
+            t2 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+            time += (double)(t2 - t1)/1e+6;
         }   
-        t2 = std::chrono::steady_clock::now();
+        
         //std::cout << std::setw(14) << std::fixed << std::setprecision(4) << "avx2 (ms): " << (double)std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()/1000.0f/iter << "\n";
-        out_results["Times"]["avx2"][std::to_string(N)]["time"] = ( (double)std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()/1000.0f ) / iter;
+        out_results["Times"]["avx2"][std::to_string(N)]["time"] = (time)/iter;
 
         // AVX512
-        /*t1 = std::chrono::steady_clock::now();
+        /*time = 0.0;
         for ( size_t i = 0; i < iter; i++ ) {
             matrix::init_zero(matF, N, N);
+            t1 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
             matmul::avx512_omp(matA, matB, matF, N, N, N);
+            t2 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+            time += (double)(t2 - t1)/1e+6;
         }   
-        t2 = std::chrono::steady_clock::now();
+        
         //std::cout << std::setw(14) << std::fixed << std::setprecision(4) << "avx512 (ms): " << (double)std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()/1000.0f/iter << "\n";
-        out_results["Times"]["avx512"][std::to_string(N)]["time"] = ( (double)std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()/1000.0f ) / iter;
+        out_results["Times"]["avx512"][std::to_string(N)]["time"] = (time)/iter;
         */
 
         // MKL
-        t1 = std::chrono::steady_clock::now();
+        time = 0.0;
         for ( size_t i = 0; i < iter; i++ ) {
             matrix::init_zero(matG, N, N);
+            t1 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
             matmul::parallelMKL(matA, matB, matG, N, N, N);
+            t2 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+            time += (double)(t2 - t1)/1e+6;
         }   
-        t2 = std::chrono::steady_clock::now();
+        
         //std::cout << std::setw(14) << std::fixed << std::setprecision(4) << "MKL (ms): " << (double)std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()/1000.0f/iter << "\n";
-        out_results["Times"]["mkl"][std::to_string(N)]["time"] = ( (double)std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()/1000.0f ) / iter;
+        out_results["Times"]["mkl"][std::to_string(N)]["time"] = (time)/iter;
 
         // Save results
         std::string path_save_serial = std::string("../data/matC_serial_") + std::to_string(N) + std::string(".dat");
@@ -125,13 +141,13 @@ int main() {
 
         // Error -> Compare Serial Vs Others
         // OpenMP Vs Serial
-        out_results["Error"][std::to_string(N)]["openMP_serial"] = matrix::compare(matD, matC, N, N); 
+        out_results["Error"][std::to_string(N)]["openMP"] = matrix::compare(matD, matC, N, N); 
         // AVX2 Vs Serial
-        out_results["Error"][std::to_string(N)]["avx2_serial"] = matrix::compare(matE, matC, N, N);
+        out_results["Error"][std::to_string(N)]["avx2"] = matrix::compare(matE, matC, N, N);
         // AVX512 Vs Serial
-        //out_results["Error"][std::to_string(N)]["avx512_serial"] = matrix::compare(matF, matC, N, N);
+        //out_results["Error"][std::to_string(N)]["avx512"] = matrix::compare(matF, matC, N, N);
         // MKL Vs Serial
-        out_results["Error"][std::to_string(N)]["mkl_serial"] = matrix::compare(matG, matC, N, N);
+        out_results["Error"][std::to_string(N)]["mkl"] = matrix::compare(matG, matC, N, N);
         
 
         mkl_free(matA);

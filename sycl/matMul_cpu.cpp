@@ -15,8 +15,8 @@ int main() {
     int rowsA, colsA;
     int rowsB, colsB;
     int rowsC, colsC;
-    auto t1 = std::chrono::steady_clock::now();
-    auto t2 = std::chrono::steady_clock::now();
+    auto t1 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+    auto t2 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     int N;
 
     std::ofstream results;
@@ -51,14 +51,17 @@ int main() {
         matrix::readMat(pathC.data(), matC, rowsC, colsC);
 
         // syCL
-        t1 = std::chrono::steady_clock::now();
+        double time = 0.0;
         for ( size_t i = 0; i < iter; i++ ) {
             matrix::init_zero(matD, N, N);
+            t1 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
             matmul::sycl_mm_cpu(matA, matB, matD, N, N, N);
+            t2 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+            time += (double)(t2 - t1)/1e+6;
         }   
-        t2 = std::chrono::steady_clock::now();
+        
         //std::cout << std::setw(14) << std::fixed << std::setprecision(4) << "MKL (ms): " << (double)std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()/1000.0f/iter << "\n";
-        out_results["Times"]["sycl"][std::to_string(N)]["time"] = ( (double)std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()/1000.0f ) / iter;
+        out_results["Times"]["sycl"][std::to_string(N)]["time"] = (time)/iter;
 
         // Save results
         std::string path_save_sycl = std::string("../data/matC_sycl_") + std::to_string(N) + std::string(".dat");

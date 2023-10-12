@@ -21,9 +21,11 @@ int main() {
     int rowsB, colsB;
     int rowsC, colsC;
 
-    auto t1 = std::chrono::steady_clock::now();
-    auto t2 = std::chrono::steady_clock::now();
+    auto t1 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+    auto t2 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     int N;
+
+    double time;
 
     std::ofstream results;
     results.open("../results/results_gpu.json");
@@ -64,59 +66,73 @@ int main() {
         matrix::readMat(pathC.data(), matC, rowsC, colsC);
 
         // Cuda Naive
-        t1 = std::chrono::steady_clock::now();
+        time = 0.0;        
         for ( size_t i = 0; i < iter; i++ ) {
             matrix::init_zero(matD, N, N);
+            t1 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
             cuda::cuda_sgemm_naive(matA, matB, matD, N, N, N, blockDim, gridDim);
+            t2 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+            time += (double)(t2 - t1)/1e+6;
         }   
-        t2 = std::chrono::steady_clock::now();
-        out_results["Times"]["cudaNaive"][std::to_string(N)]["time"] = ( (double)std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()/1000.0f ) / iter;
+        
+        out_results["Times"]["cudaNaive"][std::to_string(N)]["time"] = (time)/iter;
         std::string path_save_cuda_naive = std::string("../data/matC_cudaNaive_") + std::to_string(N) + std::string(".dat");
         matrix::writeMat(path_save_cuda_naive.data(), matD, N, N);
 
         // Cuda Tiled
-        t1 = std::chrono::steady_clock::now();
+        time = 0.0;
         for ( size_t i = 0; i < iter; i++ ) {
             matrix::init_zero(matE, N, N);
+            t1 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
             cuda::cuda_sgemm_naive(matA, matB, matE, N, N, N, blockDim, gridDim);
+            t2 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+            time += (double)(t2 - t1)/1e+6;
         }   
-        t2 = std::chrono::steady_clock::now();
-        out_results["Times"]["cudaTiled"][std::to_string(N)]["time"] = ( (double)std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()/1000.0f ) / iter;
+        
+        out_results["Times"]["cudaTiled"][std::to_string(N)]["time"] = (time)/iter;
         std::string path_save_cuda_tiled = std::string("../data/matC_cudaTiled_") + std::to_string(N) + std::string(".dat");
         matrix::writeMat(path_save_cuda_tiled.data(), matE, N, N);
 
-
-
         // cuBLAS
-        t1 = std::chrono::steady_clock::now();
+        time = 0.0;
+        
         for ( size_t i = 0; i < iter; i++ ) {
             matrix::init_zero(matF, N, N);
+            t1 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
             cuda::cublas_sgemm(matA, matB, matF, N, N, N);
+            t2 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+            time += (double)(t2 - t1)/1e+6;
         }   
-        t2 = std::chrono::steady_clock::now();
-        out_results["Times"]["cuBLAS"][std::to_string(N)]["time"] = ( (double)std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()/1000.0f ) / iter;
+        
+        out_results["Times"]["cuBLAS"][std::to_string(N)]["time"] = (time)/iter;
         std::string path_save_cuBLAS = std::string("../data/matC_cuBLAS_") + std::to_string(N) + std::string(".dat");
         matrix::writeMat(path_save_cuBLAS.data(), matF, N, N);
 
         // cuBLAS Async
-        t1 = std::chrono::steady_clock::now();
+        time = 0.0;
         for ( size_t i = 0; i < iter; i++ ) {
             matrix::init_zero(matG, N, N);
+            t1 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
             cuda::cublas_sgemmAsync(matA, matB, matG, N, N, N);
+            t2 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+            time += (double)(t2 - t1)/1e+6;
         }   
-        t2 = std::chrono::steady_clock::now();
-        out_results["Times"]["cuBLAS_async"][std::to_string(N)]["time"] = ( (double)std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()/1000.0f ) / iter;
+        
+        out_results["Times"]["cuBLAS_async"][std::to_string(N)]["time"] = (time)/iter;
         std::string path_save_cuBLAS_async = std::string("../data/matC_cuBLAS_async_") + std::to_string(N) + std::string(".dat");
         matrix::writeMat(path_save_cuBLAS_async.data(), matG, N, N);
 
         // cuBLAS Tensor Core
-        t1 = std::chrono::steady_clock::now();
+        time = 0.0;
         for ( size_t i = 0; i < iter; i++ ) {
             matrix::init_zero(matH, N, N);
+            t1 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
             cuda::cublas_sgemmTensor(matA, matB, matH, N, N, N, blockDim, gridDim);
+            t2 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+            time += (double)(t2 - t1)/1e+6;
         }   
-        t2 = std::chrono::steady_clock::now();
-        out_results["Times"]["cuBLAS_Tensor"][std::to_string(N)]["time"] = ( (double)std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()/1000.0f ) / iter;
+        
+        out_results["Times"]["cuBLAS_Tensor"][std::to_string(N)]["time"] = (time)/iter;
         std::string path_save_cuBLAS_tensor = std::string("../data/matC_cuBLAS_Tensor_") + std::to_string(N) + std::string(".dat");
         matrix::writeMat(path_save_cuBLAS_tensor.data(), matH, N, N);
 

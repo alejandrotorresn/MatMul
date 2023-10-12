@@ -1,6 +1,17 @@
 #pragma once
 #include <mkl.h>
+#include <CL/sycl.hpp>
 #include <immintrin.h>
+
+constexpr int MAXTHREADS=16;
+constexpr int MATRIXTILESIZE=16;
+
+template <typename T>
+class Matrix1_1;
+
+template <typename T>
+class Matrix1_2;
+
 
 // use these arrays to perform masked load and store
 // operations for any residual columns.
@@ -51,6 +62,107 @@ namespace matmul {
         float alpha = 1.0;
         float beta = 0.0;
         cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, M, N, K, alpha, matA, K, matB, N, beta, matC, N);
+    }
+
+
+    
+    
+    inline void sycl_mm_cpu(const float *matA, const float *matB, float *matC, const size_t N, const size_t M, const size_t K) {
+        
+        int i, j, k;
+
+        sycl::queue q{ sycl::cpu_selector_v };
+
+        {   
+            sycl::range<2> matrix_range{N, M};
+            sycl::range<2> tile_range{MATRIXTILESIZE, MATRIXTILESIZE};
+            sycl::buffer<float, 2> a_buf(matA, sycl::range<2>(M, K));
+            sycl::buffer<float, 2> b_buf(matB, sycl::range<2>(K, N));
+            sycl::buffer<float, 2> c_buf(matC, sycl::range<2>(M, N));
+
+            q.submit([&](sycl::handler& h) {
+                sycl::accessor a{a_buf, h, sycl::read_only};
+                sycl::accessor b{b_buf, h, sycl::read_only};
+                sycl::accessor c{c_buf, h};
+
+                // Create matrix tiles
+                sycl::accessor<float, 2, sycl::access::mode::read_write, sycl::access::target::local> aTile(sycl::range<2>(MATRIXTILESIZE, MATRIXTILESIZE), h);
+                sycl::accessor<float, 2, sycl::access::mode::read_write, sycl::access::target::local> bTile(sycl::range<2>(MATRIXTILESIZE, MATRIXTILESIZE), h);
+                
+
+                h.parallel_for<class Matrix1_1<float>>(sycl::nd_range<2>(matrix_range,tile_range),[=](sycl::nd_item<2> it) {
+                    int k;
+                    const int numTiles = K / MATRIXTILESIZE;
+                    const int row = it.get_local_id(0);
+                    const int col = it.get_local_id(1);
+                    const int globalRow = MATRIXTILESIZE * it.get_group(0) + row;
+                    const int globalCol = MATRIXTILESIZE * it.get_group(1) + col;
+                    float acc = 0.0;
+                    for (int t = 0; t < numTiles; t++) {
+                        const int tiledRow = MATRIXTILESIZE * t + row;
+                        const int tiledCol = MATRIXTILESIZE * t + col;
+                        aTile[row][col] = a[globalRow][tiledCol];
+                        bTile[row][col] = b[tiledRow][globalCol];
+                        it.barrier(sycl::access::fence_space::local_space);
+                        for (k = 0; k < MATRIXTILESIZE; k++) {
+                            // Perform computation ind[0] is row, ind[1] is col
+                            acc += aTile[row][k] * bTile[k][col];
+                        }
+                        it.barrier(sycl::access::fence_space::local_space);
+                    }
+                c[globalRow][globalCol] = acc;
+                });
+            }).wait_and_throw();
+        }
+    }
+
+    inline void sycl_mm_gpu(const float *matA, const float *matB, float *matC, const size_t N, const size_t M, const size_t K) {
+        int i, j, k;
+
+        sycl::queue q{ sycl::gpu_selector_v };
+
+        {   
+            sycl::range<2> matrix_range{N, M};
+            sycl::range<2> tile_range{MATRIXTILESIZE, MATRIXTILESIZE};
+            sycl::buffer<float, 2> a_buf(matA, sycl::range<2>(M, K));
+            sycl::buffer<float, 2> b_buf(matB, sycl::range<2>(K, N));
+            sycl::buffer<float, 2> c_buf(matC, sycl::range<2>(M, N));
+
+            q.submit([&](sycl::handler& h) {
+                sycl::accessor a{a_buf, h, sycl::read_only};
+                sycl::accessor b{b_buf, h, sycl::read_only};
+                sycl::accessor c{c_buf, h};
+
+                // Create matrix tiles
+                sycl::accessor<float, 2, sycl::access::mode::read_write, sycl::access::target::local> aTile(sycl::range<2>(MATRIXTILESIZE, MATRIXTILESIZE), h);
+                sycl::accessor<float, 2, sycl::access::mode::read_write, sycl::access::target::local> bTile(sycl::range<2>(MATRIXTILESIZE, MATRIXTILESIZE), h);
+                
+
+                h.parallel_for<class Matrix1_2<float>>(sycl::nd_range<2>(matrix_range,tile_range),[=](sycl::nd_item<2> it) {
+                    int k;
+                    const int numTiles = K / MATRIXTILESIZE;
+                    const int row = it.get_local_id(0);
+                    const int col = it.get_local_id(1);
+                    const int globalRow = MATRIXTILESIZE * it.get_group(0) + row;
+                    const int globalCol = MATRIXTILESIZE * it.get_group(1) + col;
+                    float acc = 0.0;
+                    for (int t = 0; t < numTiles; t++) {
+                        const int tiledRow = MATRIXTILESIZE * t + row;
+                        const int tiledCol = MATRIXTILESIZE * t + col;
+                        aTile[row][col] = a[globalRow][tiledCol];
+                        bTile[row][col] = b[tiledRow][globalCol];
+                        it.barrier(sycl::access::fence_space::local_space);
+                        for (k = 0; k < MATRIXTILESIZE; k++) {
+                            // Perform computation ind[0] is row, ind[1] is col
+                            acc += aTile[row][k] * bTile[k][col];
+                        }
+                        it.barrier(sycl::access::fence_space::local_space);
+                    }
+                c[globalRow][globalCol] = acc;
+                });
+            }).wait_and_throw();
+        }
+        
     }
 
     inline void avx2_omp(const float *A, const float *B, float *C, int N, int M, int K) {
@@ -107,10 +219,10 @@ namespace matmul {
             K: cols in A and rows in B
         */
 
-    const size_t num_simd_elements = 16;
-    size_t num_residual_cols = M % num_simd_elements;
+        const size_t num_simd_elements = 16;
+        size_t num_residual_cols = M % num_simd_elements;
 
-    __mmask16 res_mask = (__mmask16)((1 << num_residual_cols) - 1);
+        __mmask16 res_mask = (__mmask16)((1 << num_residual_cols) - 1);
 
         size_t i, j, k;
         #pragma omp parallel for shared(C, A, B, N, M, K,) private(i, k)

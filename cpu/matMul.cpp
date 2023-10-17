@@ -68,7 +68,8 @@ int main() {
         }   
         
         //std::cout << std::setw(14) << std::fixed << std::setprecision(4) << "Serial (ms): " << (double)std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()/1000.0f/iter << "\n";
-        out_results["Times"]["serial"][std::to_string(N)]["time"] = (time)/iter;
+        out_results["serial"][std::to_string(N)]["time"] = (time)/iter;
+        out_results["serial"][std::to_string(N)]["error"] = matrix::compare(matC, matC, N, N);
 
         // OpenMP
         time = 0.0;
@@ -81,7 +82,8 @@ int main() {
         }
         
         //std::cout << std::setw(14) << std::fixed << std::setprecision(4) << "OpenMP (ms): " << (double)std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()/1000.0f/iter << "\n";
-        out_results["Times"]["openMP"][std::to_string(N)]["time"] = (time)/iter;
+        out_results["openMP"][std::to_string(N)]["time"] = (time)/iter;
+        out_results["openMP"][std::to_string(N)]["error"] = matrix::compare(matD, matC, N, N);
 
         // AVX2
         time = 0.0;
@@ -94,7 +96,8 @@ int main() {
         }   
         
         //std::cout << std::setw(14) << std::fixed << std::setprecision(4) << "avx2 (ms): " << (double)std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()/1000.0f/iter << "\n";
-        out_results["Times"]["avx2"][std::to_string(N)]["time"] = (time)/iter;
+        out_results["avx2"][std::to_string(N)]["time"] = (time)/iter;
+        out_results["avx2"][std::to_string(N)]["error"] = matrix::compare(matE, matC, N, N);
 
         // AVX512
         /*time = 0.0;
@@ -107,7 +110,8 @@ int main() {
         }   
         
         //std::cout << std::setw(14) << std::fixed << std::setprecision(4) << "avx512 (ms): " << (double)std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()/1000.0f/iter << "\n";
-        out_results["Times"]["avx512"][std::to_string(N)]["time"] = (time)/iter;
+        out_results["avx512"][std::to_string(N)]["time"] = (time)/iter;
+        out_results["avx512"][std::to_string(N)]["error"] = matrix::compare(matF, matC, N, N);
         */
 
         // MKL
@@ -121,7 +125,8 @@ int main() {
         }   
         
         //std::cout << std::setw(14) << std::fixed << std::setprecision(4) << "MKL (ms): " << (double)std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()/1000.0f/iter << "\n";
-        out_results["Times"]["mkl"][std::to_string(N)]["time"] = (time)/iter;
+        out_results["mkl"][std::to_string(N)]["time"] = (time)/iter;
+        out_results["mkl"][std::to_string(N)]["error"] = matrix::compare(matG, matC, N, N);
 
         // Save results
         std::string path_save_serial = std::string("../data/matC_serial_") + std::to_string(N) + std::string(".dat");
@@ -138,17 +143,6 @@ int main() {
         
         std::string path_save_mkl = std::string("../data/matC_mkl_") + std::to_string(N) + std::string(".dat");
         matrix::writeMat(path_save_mkl.data(), matG, N, N);
-
-        // Error -> Compare Serial Vs Others
-        // OpenMP Vs Serial
-        out_results["Error"][std::to_string(N)]["openMP"] = matrix::compare(matD, matC, N, N); 
-        // AVX2 Vs Serial
-        out_results["Error"][std::to_string(N)]["avx2"] = matrix::compare(matE, matC, N, N);
-        // AVX512 Vs Serial
-        //out_results["Error"][std::to_string(N)]["avx512"] = matrix::compare(matF, matC, N, N);
-        // MKL Vs Serial
-        out_results["Error"][std::to_string(N)]["mkl"] = matrix::compare(matG, matC, N, N);
-        
 
         mkl_free(matA);
         mkl_free(matB);

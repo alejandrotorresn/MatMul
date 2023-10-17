@@ -37,7 +37,7 @@ namespace matrix {
         std::ifstream matIn(path, std::ios_base::in);
 
         if ( matIn.fail() ) {
-            std::cout << "Error opening file(s)\n";
+            std::cout << "Error opening file(s):" << path << "\n";
             exit(0);
         }
 

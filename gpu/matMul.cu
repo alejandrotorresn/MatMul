@@ -75,7 +75,8 @@ int main() {
             time += (double)(t2 - t1)/1e+6;
         }   
         
-        out_results["Times"]["cudaNaive"][std::to_string(N)]["time"] = (time)/iter;
+        out_results["cudaNaive"][std::to_string(N)]["time"] = (time)/iter;
+        out_results["cudaNaive"][std::to_string(N)]["error"] = matrix::compare(matD, matC, N, N);
         std::string path_save_cuda_naive = std::string("../data/matC_cudaNaive_") + std::to_string(N) + std::string(".dat");
         matrix::writeMat(path_save_cuda_naive.data(), matD, N, N);
 
@@ -89,7 +90,8 @@ int main() {
             time += (double)(t2 - t1)/1e+6;
         }   
         
-        out_results["Times"]["cudaTiled"][std::to_string(N)]["time"] = (time)/iter;
+        out_results["cudaTiled"][std::to_string(N)]["time"] = (time)/iter;
+        out_results["cudaTiled"][std::to_string(N)]["error"] = matrix::compare(matE, matC, N, N);
         std::string path_save_cuda_tiled = std::string("../data/matC_cudaTiled_") + std::to_string(N) + std::string(".dat");
         matrix::writeMat(path_save_cuda_tiled.data(), matE, N, N);
 
@@ -104,7 +106,8 @@ int main() {
             time += (double)(t2 - t1)/1e+6;
         }   
         
-        out_results["Times"]["cuBLAS"][std::to_string(N)]["time"] = (time)/iter;
+        out_results["cuBLAS"][std::to_string(N)]["time"] = (time)/iter;
+        out_results["cuBLAS"][std::to_string(N)]["error"] = matrix::compare(matF, matC, N, N);
         std::string path_save_cuBLAS = std::string("../data/matC_cuBLAS_") + std::to_string(N) + std::string(".dat");
         matrix::writeMat(path_save_cuBLAS.data(), matF, N, N);
 
@@ -118,7 +121,8 @@ int main() {
             time += (double)(t2 - t1)/1e+6;
         }   
         
-        out_results["Times"]["cuBLAS_async"][std::to_string(N)]["time"] = (time)/iter;
+        out_results["cuBLAS_async"][std::to_string(N)]["time"] = (time)/iter;
+        out_results["cuBLAS_async"][std::to_string(N)]["error"] = matrix::compare(matG, matC, N, N);
         std::string path_save_cuBLAS_async = std::string("../data/matC_cuBLAS_async_") + std::to_string(N) + std::string(".dat");
         matrix::writeMat(path_save_cuBLAS_async.data(), matG, N, N);
 
@@ -132,15 +136,10 @@ int main() {
             time += (double)(t2 - t1)/1e+6;
         }   
         
-        out_results["Times"]["cuBLAS_Tensor"][std::to_string(N)]["time"] = (time)/iter;
+        out_results["cuBLAS_Tensor"][std::to_string(N)]["time"] = (time)/iter;
+        out_results["cuBLAS_Tensor"][std::to_string(N)]["error"] = matrix::compare(matH, matC, N, N);
         std::string path_save_cuBLAS_tensor = std::string("../data/matC_cuBLAS_Tensor_") + std::to_string(N) + std::string(".dat");
-        matrix::writeMat(path_save_cuBLAS_tensor.data(), matH, N, N);
-
-        out_results["Error"][std::to_string(N)]["cudaNaive"] = matrix::compare(matD, matC, N, N);
-        out_results["Error"][std::to_string(N)]["cudaTiled"] = matrix::compare(matE, matC, N, N);
-        out_results["Error"][std::to_string(N)]["cuBLAS"] = matrix::compare(matF, matC, N, N);
-        out_results["Error"][std::to_string(N)]["cuBLAS_async"] = matrix::compare(matG, matC, N, N);
-        out_results["Error"][std::to_string(N)]["cuBLAS_tensor"] = matrix::compare(matH, matC, N, N);
+        matrix::writeMat(path_save_cuBLAS_tensor.data(), matH, N, N);        
 
         free(matA);
         free(matB);

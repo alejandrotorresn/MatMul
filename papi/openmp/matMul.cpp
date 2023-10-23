@@ -12,8 +12,8 @@
 #include <bits/stdc++.h>
 #include <chrono>
 #include <string>
-#include <papi.h>
 #include <jsoncpp/json/json.h>
+#include <papi.h>
 #include "../../include/matrix.hpp"
 #include "../../include/matmul.hpp"
 
@@ -26,10 +26,7 @@ int main() {
     int rowsA, colsA;
     int rowsB, colsB;
     int retval;
-    auto t1 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-    auto t2 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     int N;
-    double time;
     
     std::ifstream ifs("../../conf/settings.json");
     Json::Reader reader;
@@ -46,15 +43,12 @@ int main() {
         matA = (float *)mkl_malloc(N*N*sizeof(float), 32);
         matB = (float *)mkl_malloc(N*N*sizeof(float), 32);
         matC = (float *)mkl_malloc(N*N*sizeof(float), 32);
-
         
         std::string pathA = std::string("../" + path + "matA_") + std::to_string(N) + std::string(".dat");
         std::string pathB = std::string("../" + path + "matB_") + std::to_string(N) + std::string(".dat");
         
         matrix::readMat(pathA.data(), matA, rowsA, colsA);
         matrix::readMat(pathB.data(), matB, rowsB, colsB);
-        
-        time = 0.0;
 
         retval = PAPI_hl_region_begin("computation");
         if (retval != PAPI_OK)
@@ -62,10 +56,7 @@ int main() {
         
         for ( size_t i = 0; i < iter; i++ ) {
             matrix::init_zero(matC, N, N);
-            t1 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
             matmul::ompNaive(matA, matB, matC, N, N, N);
-            t2 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-            time += (double)(t2 - t1)/1e+6;
         }
 
         retval = PAPI_hl_region_end("computation");

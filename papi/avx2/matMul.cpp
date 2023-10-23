@@ -56,7 +56,7 @@ int main() {
         
         for ( size_t i = 0; i < iter; i++ ) {
             matrix::init_zero(matC, N, N);
-            matmul::serialNaive(matA, matB, matC, N, N, N);
+            matmul::avx2_omp(matA, matB, matC, N, N, N);
         }
 
         retval = PAPI_hl_region_end("computation");

@@ -85,7 +85,7 @@ int main() {
         for ( size_t i = 0; i < iter; i++ ) {
             matrix::init_zero(matE, N, N);
             t1 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-            cuda::cuda_sgemm_naive(matA, matB, matE, N, N, N, blockDim, gridDim);
+            cuda::cuda_sgemm_tiled(matA, matB, matE, N, N, N, blockDim, gridDim);
             t2 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
             time += (double)(t2 - t1)/1e+6;
         }   

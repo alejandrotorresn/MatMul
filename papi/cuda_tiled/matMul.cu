@@ -12,6 +12,7 @@
 #include "../include/matrix.hpp"
 #include "../include/cuda_mm.hpp"
 
+void handle_error(int retval);
 
 int main() {
     std::ios_base::sync_with_stdio(false);

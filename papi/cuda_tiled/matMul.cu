@@ -8,9 +8,10 @@
 #include <bits/stdc++.h>
 #include <chrono>
 #include <string>
+#include <papi.h>
 #include <jsoncpp/json/json.h>
-#include "../include/matrix.hpp"
-#include "../include/cuda_mm.hpp"
+#include "../../include/matrix.hpp"
+#include "../../include/cuda_mm.hpp"
 
 void handle_error(int retval);
 
@@ -23,7 +24,7 @@ int main() {
     int retval;
     int N;
     
-    std::ifstream ifs("../conf/settings.json");
+    std::ifstream ifs("../../conf/settings.json");
     Json::Reader reader;
     Json::Value obj;
     reader.parse(ifs, obj);
@@ -31,8 +32,6 @@ int main() {
     std::string path = obj["path"].asString();
     int iter = obj["iterations"].asInt();
     Json::Value& sizes = obj["sizes"];
-
-    Json::Value out_results;
 
     for ( int i = 0; i < sizes.size(); i++ ) {
         N = sizes[i]["N"].asInt();
@@ -45,8 +44,8 @@ int main() {
         matB = (float *)malloc(N * N * sizeof(float));
         matC = (float *)malloc(N * N * sizeof(float));
 
-        std::string pathA = std::string(path + "matA_") + std::to_string(N) + std::string(".dat");
-        std::string pathB = std::string(path + "matB_") + std::to_string(N) + std::string(".dat");
+        std::string pathA = std::string("../" + path + "matA_") + std::to_string(N) + std::string(".dat");
+        std::string pathB = std::string("../" + path + "matB_") + std::to_string(N) + std::string(".dat");
 
         matrix::readMat(pathA.data(), matA, rowsA, colsA);
         matrix::readMat(pathB.data(), matB, rowsB, colsB);
@@ -70,7 +69,6 @@ int main() {
     }
 
     ifs.close();
-    results.close();
 
     return 0;
 }

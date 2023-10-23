@@ -16,6 +16,11 @@ PAPI_FP_OPS  0x80000066  Yes   No   Floating point operations
 PAPI_SP_OPS  0x80000067  Yes   Yes  Floating point operations; optimized to count scaled single precision vector operations
 PAPI_VEC_SP  0x80000069  Yes   No   Single precision vector/SIMD instructions
 
+rapl:::PACKAGE_ENERGY:PACKAGE0
+rapl:::PACKAGE_ENERGY:PACKAGE1
+rapl:::DRAM_ENERGY:PACKAGE0
+rapl:::DRAM_ENERGY:PACKAGE1
+
 CACHES
 
 export LIBPFM_FORCE_PMU=icx
@@ -33,3 +38,21 @@ export PAPI_EVENTS="rapl:::PACKAGE_ENERGY:PACKAGE0,rapl:::PACKAGE_ENERGY:PACKAGE
 ------------------------------------------------------------------------------------------------------------
 |   GPU
 ------------------------------------------------------------------------------------------------------------
+export PAPI_CUDA_ROOT=/usr/local/cuda-10.1
+papi_native_avail | grep nvml
+
+Architecture V100    
+nvml:::Tesla_V100-PCIE-32GB:device_0:power
+nvml:::Tesla_V100-PCIE-32GB:device_0:gpu_utilization
+nvml:::Tesla_V100-PCIE-32GB:device_0:memory_utilization
+
+nvml:::Tesla_V100-PCIE-32GB:device_0:l1_single_ecc_errors
+nvml:::Tesla_V100-PCIE-32GB:device_0:l2_single_ecc_errors
+nvml:::Tesla_V100-PCIE-32GB:device_0:memory_single_ecc_errors
+nvml:::Tesla_V100-PCIE-32GB:device_0:regfile_single_ecc_errors
+nvml:::Tesla_V100-PCIE-32GB:device_0:1l_double_ecc_errors
+nvml:::Tesla_V100-PCIE-32GB:device_0:l2_double_ecc_errors
+nvml:::Tesla_V100-PCIE-32GB:device_0:memory_double_ecc_errors
+nvml:::Tesla_V100-PCIE-32GB:device_0:regfile_double_ecc_errors
+
+export PAPI_EVENTS="nvml:::Tesla_V100-PCIE-32GB:device_0:power,nvml:::Tesla_V100-PCIE-32GB:device_0:gpu_utilization,nvml:::Tesla_V100-PCIE-32GB:device_0:memory_utilization"

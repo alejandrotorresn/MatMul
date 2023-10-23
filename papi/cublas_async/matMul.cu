@@ -42,8 +42,8 @@ int main() {
         matB = (float *)malloc(N * N * sizeof(float));
         matC = (float *)malloc(N * N * sizeof(float));
 
-        std::string pathA = std::string(path + "matA_") + std::to_string(N) + std::string(".dat");
-        std::string pathB = std::string(path + "matB_") + std::to_string(N) + std::string(".dat");
+        std::string pathA = std::string("../" + path + "matA_") + std::to_string(N) + std::string(".dat");
+        std::string pathB = std::string("../" + path + "matB_") + std::to_string(N) + std::string(".dat");
         
         matrix::readMat(pathA.data(), matA, rowsA, colsA);
         matrix::readMat(pathB.data(), matB, rowsB, colsB);

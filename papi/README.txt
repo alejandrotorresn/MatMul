@@ -38,7 +38,7 @@ export PAPI_EVENTS="rapl:::PACKAGE_ENERGY:PACKAGE0,rapl:::PACKAGE_ENERGY:PACKAGE
 ------------------------------------------------------------------------------------------------------------
 |   GPU
 ------------------------------------------------------------------------------------------------------------
-export PAPI_CUDA_ROOT=/usr/local/cuda-10.1
+export PAPI_CUDA_ROOT=/usr/local/cuda
 papi_native_avail | grep nvml
 
 Architecture V100    

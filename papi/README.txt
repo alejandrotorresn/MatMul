@@ -56,3 +56,9 @@ nvml:::Tesla_V100-PCIE-32GB:device_0:memory_double_ecc_errors
 nvml:::Tesla_V100-PCIE-32GB:device_0:regfile_double_ecc_errors
 
 export PAPI_EVENTS="nvml:::Tesla_V100-PCIE-32GB:device_0:power,nvml:::Tesla_V100-PCIE-32GB:device_0:gpu_utilization,nvml:::Tesla_V100-PCIE-32GB:device_0:memory_utilization"
+
+
+
+
+-----------------------------------
+PPO_ENERGY

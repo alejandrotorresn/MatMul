@@ -1,4 +1,5 @@
 #!/bin/bash
+ulimit -s unlimited
 source $PWD/progress_bar.sh
 rm matGen
 tmp=16

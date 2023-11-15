@@ -9,9 +9,9 @@ do
                         cd $f
                         echo "power_${f}_${tmp}"
                         perf stat -o ../power_${f}_${tmp}.txt -a -r 1 -e "power/energy-pkg/" -e "power/energy-ram/" ./matMul
-                        sed -i "s/$tmp/$i/g" ../../conf/settings.json
-                        tmp=$i
                         cd ..
                 fi
         done
+        sed -i "s/$tmp/$i/g" ../../conf/settings.json
+        tmp=$i
 done

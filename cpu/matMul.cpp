@@ -10,7 +10,7 @@
 #include <bits/stdc++.h>
 #include <chrono>
 #include <string>
-#include <jsoncpp/json/json.h>
+#include <json/json.h>
 #include "../include/matrix.hpp"
 #include "../include/matmul.hpp"
 
@@ -49,7 +49,6 @@ int main() {
         matE = (float *)mkl_malloc(N*N*sizeof(float), 32);
         matF = (float *)mkl_malloc(N*N*sizeof(float), 32);
         matG = (float *)mkl_malloc(N*N*sizeof(float), 32);
-
         
         std::string pathA = std::string(path + "matA_") + std::to_string(N) + std::string(".dat");
         std::string pathB = std::string(path + "matB_") + std::to_string(N) + std::string(".dat");
@@ -59,16 +58,14 @@ int main() {
 
         // Serial
         time = 0.0;
-        for ( size_t i = 0; i < iter; i++ ) {
-            matrix::init_zero(matC, N, N);
-            t1 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-            matmul::serialNaive(matA, matB, matC, N, N, N);
-            t2 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-            time += (double)(t2 - t1)/1e+6;
-        }   
-        
+        matrix::init_zero(matC, N, N);
+        t1 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+        matmul::serialNaive(matA, matB, matC, N, N, N);
+        t2 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+        time += (double)(t2 - t1)/1e+6;
+
         //std::cout << std::setw(14) << std::fixed << std::setprecision(4) << "Serial (ms): " << (double)std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()/1000.0f/iter << "\n";
-        out_results["serial"][std::to_string(N)]["time"] = (time)/iter;
+        out_results["serial"][std::to_string(N)]["time"] = (time);
         out_results["serial"][std::to_string(N)]["error"] = matrix::compare(matC, matC, N, N);
 
         // OpenMP
@@ -131,18 +128,6 @@ int main() {
         // Save results
         std::string path_save_serial = std::string("../data/matC_serial_") + std::to_string(N) + std::string(".dat");
         matrix::writeMat(path_save_serial.data(), matC, N, N);
-        
-        std::string path_save_omp = std::string("../data/matC_omp_") + std::to_string(N) + std::string(".dat");
-        matrix::writeMat(path_save_omp.data(), matD, N, N);
-
-        std::string path_save_avx2 = std::string("../data/matC_avx2_") + std::to_string(N) + std::string(".dat");
-        matrix::writeMat(path_save_avx2.data(), matE, N, N);
-        
-        //std::string path_save_avx512 = std::string("../data/matC_avx51_") + std::to_string(N) + std::string(".dat");
-        //matrix::writeMat(path_save_avx512.data(), matF, N, N);
-        
-        std::string path_save_mkl = std::string("../data/matC_mkl_") + std::to_string(N) + std::string(".dat");
-        matrix::writeMat(path_save_mkl.data(), matG, N, N);
 
         mkl_free(matA);
         mkl_free(matB);

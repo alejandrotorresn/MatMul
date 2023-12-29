@@ -1,10 +1,13 @@
+/*
+icpx -fsycl -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl  -DMKL_ILP64  -m64 -qopenmp -ljsoncpp -I"${MKLROOT}/include" -O3 -mavx2 -mfma matMul_cpu.cpp -o matMul_cpu
+*/
 #include <iostream>
 #include <fstream>
 #include <array>
 #include <bits/stdc++.h>
 #include <chrono>
 #include <string>
-#include <jsoncpp/json/json.h>
+#include <json/json.h>
 #include "../include/matrix.hpp"
 #include "../include/matmul.hpp"
 
@@ -63,10 +66,6 @@ int main() {
         //std::cout << std::setw(14) << std::fixed << std::setprecision(4) << "MKL (ms): " << (double)std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()/1000.0f/iter << "\n";
         out_results["sycl_cpu"][std::to_string(N)]["time"] = (time)/iter;
         out_results["sycl_cpu"][std::to_string(N)]["error"] = matrix::compare(matD, matC, N, N);
-
-        // Save results
-        std::string path_save_sycl = std::string("../data/matC_sycl_") + std::to_string(N) + std::string(".dat");
-        matrix::writeMat(path_save_sycl.data(), matD, N, N);
         
         mkl_free(matA);
         mkl_free(matB);

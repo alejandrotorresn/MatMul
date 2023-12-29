@@ -7,7 +7,7 @@
 #include <bits/stdc++.h> 
 #include "../include/matrix.hpp"
 
-const int N = 304;
+const int N = 8192;
 
 
 int main() {

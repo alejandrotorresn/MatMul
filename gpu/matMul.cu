@@ -8,7 +8,7 @@
 #include <bits/stdc++.h>
 #include <chrono>
 #include <string>
-#include <jsoncpp/json/json.h>
+#include <json/json.h>
 #include "../include/matrix.hpp"
 #include "../include/cuda_mm.hpp"
 
@@ -77,8 +77,6 @@ int main() {
         
         out_results["cudaNaive"][std::to_string(N)]["time"] = (time)/iter;
         out_results["cudaNaive"][std::to_string(N)]["error"] = matrix::compare(matD, matC, N, N);
-        std::string path_save_cuda_naive = std::string("../data/matC_cudaNaive_") + std::to_string(N) + std::string(".dat");
-        matrix::writeMat(path_save_cuda_naive.data(), matD, N, N);
 
         // Cuda Tiled
         time = 0.0;
@@ -92,8 +90,6 @@ int main() {
         
         out_results["cudaTiled"][std::to_string(N)]["time"] = (time)/iter;
         out_results["cudaTiled"][std::to_string(N)]["error"] = matrix::compare(matE, matC, N, N);
-        std::string path_save_cuda_tiled = std::string("../data/matC_cudaTiled_") + std::to_string(N) + std::string(".dat");
-        matrix::writeMat(path_save_cuda_tiled.data(), matE, N, N);
 
         // cuBLAS
         time = 0.0;
@@ -108,8 +104,6 @@ int main() {
         
         out_results["cuBLAS"][std::to_string(N)]["time"] = (time)/iter;
         out_results["cuBLAS"][std::to_string(N)]["error"] = matrix::compare(matF, matC, N, N);
-        std::string path_save_cuBLAS = std::string("../data/matC_cuBLAS_") + std::to_string(N) + std::string(".dat");
-        matrix::writeMat(path_save_cuBLAS.data(), matF, N, N);
 
         // cuBLAS Async
         time = 0.0;
@@ -123,8 +117,6 @@ int main() {
         
         out_results["cuBLAS_async"][std::to_string(N)]["time"] = (time)/iter;
         out_results["cuBLAS_async"][std::to_string(N)]["error"] = matrix::compare(matG, matC, N, N);
-        std::string path_save_cuBLAS_async = std::string("../data/matC_cuBLAS_async_") + std::to_string(N) + std::string(".dat");
-        matrix::writeMat(path_save_cuBLAS_async.data(), matG, N, N);
 
         // cuBLAS Tensor Core
         time = 0.0;
@@ -137,9 +129,7 @@ int main() {
         }   
         
         out_results["cuBLAS_Tensor"][std::to_string(N)]["time"] = (time)/iter;
-        out_results["cuBLAS_Tensor"][std::to_string(N)]["error"] = matrix::compare(matH, matC, N, N);
-        std::string path_save_cuBLAS_tensor = std::string("../data/matC_cuBLAS_Tensor_") + std::to_string(N) + std::string(".dat");
-        matrix::writeMat(path_save_cuBLAS_tensor.data(), matH, N, N);        
+        out_results["cuBLAS_Tensor"][std::to_string(N)]["error"] = matrix::compare(matH, matC, N, N);      
 
         free(matA);
         free(matB);

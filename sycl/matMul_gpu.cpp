@@ -4,7 +4,7 @@
 #include <bits/stdc++.h>
 #include <chrono>
 #include <string>
-#include <jsoncpp/json/json.h>
+#include <json/json.h>
 #include "../include/matrix.hpp"
 #include "../include/matmul.hpp"
 
@@ -63,9 +63,6 @@ int main() {
         //std::cout << std::setw(14) << std::fixed << std::setprecision(4) << "MKL (ms): " << (double)std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()/1000.0f/iter << "\n";
         out_results["sycl_gpu"][std::to_string(N)]["time"] = (time)/iter;
         out_results["sycl_gpu"][std::to_string(N)]["error"] = matrix::compare(matD, matC, N, N);
-        // Save results
-        std::string path_save_sycl = std::string("../data/matC_sycl_") + std::to_string(N) + std::string(".dat");
-        matrix::writeMat(path_save_sycl.data(), matD, N, N);
 
         mkl_free(matA);
         mkl_free(matB);

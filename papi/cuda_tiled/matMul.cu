@@ -9,7 +9,7 @@
 #include <chrono>
 #include <string>
 #include <papi.h>
-#include <jsoncpp/json/json.h>
+#include <json/json.h>
 #include "../../include/matrix.hpp"
 #include "../../include/cuda_mm.hpp"
 

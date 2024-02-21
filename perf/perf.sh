@@ -1,6 +1,6 @@
-#!/bin/bash
+!/bin/bash
 ulimit -s unlimited
-declare -a sizes=( 48 64 80 96 112 128 256 384 512 640 768 896 1024 2048 3072 4096 5120 6144 7168 8192 9216 )
+declare -a sizes=( 48 64 80 96 112 128 256 384 512 640 768 896 1024 2048 3072 4096 5120 6144 7168 8192 )
 tmp=32
 for i in "${sizes[@]}"
 do
@@ -12,6 +12,6 @@ do
                         cd ..
                 fi
         done
-        sed -i "s/$tmp/$i/g" ../../conf/settings.json
+        sed -i "s/$tmp/$i/g" ../conf/settings.json
         tmp=$i
 done

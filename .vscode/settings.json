@@ -92,6 +92,8 @@
         "__nullptr": "cpp",
         "ios": "cpp",
         "queue": "cpp",
-        "target": "cpp"
+        "target": "cpp",
+        "format": "cpp",
+        "stdfloat": "cpp"
     }
 }

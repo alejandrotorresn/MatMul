@@ -4,7 +4,7 @@
     icpx -fsycl -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl  -DMKL_ILP64  -m64 -qopenmp -ljsoncpp -I"${MKLROOT}/include" -O3 -mavx2 -mfma matMul.cpp -o matMul
     icpx -fsycl -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl  -DMKL_ILP64  -m64 -qopenmp -ljsoncpp -I"${MKLROOT}/include" -O3 -mavx2 -mfma -mavx512f -mavx512vl -mavx512bw -mavx512dq  matMul.cpp -o matMul
     // PAPI
-    icpx -fsycl -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl -m64 -ljsoncpp -I"${MKLROOT}/include" -I /opt/papi/include ../handle_error.c /opt/papi/lib/libpapi.a -O3 matMul.cpp -o matMul
+    icpx -fsycl -fsycl-targets=nvptx64-nvidia-cuda -Xsycl-target-backend=nvptx64-nvidia-cuda -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl  -DMKL_ILP64  -m64 -qopenmp -ljsoncpp -I"${MKLROOT}/include" -I /opt/papi/include ../handle_error.c /opt/papi/lib/libpapi.a -O3 -mavx2 -mfma matMul_gpu.cpp -o  matMul_gpu
 */
 #include <iostream>
 #include <fstream>

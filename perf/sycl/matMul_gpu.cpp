@@ -11,7 +11,7 @@
 #include <array>
 #include <bits/stdc++.h>
 #include <string>
-#include <jsoncpp/json/json.h>
+#include <json/json.h>
 #include "../../include/matrix.hpp"
 #include "../../include/matmul.hpp"
 

@@ -13,7 +13,7 @@
 #include <bits/stdc++.h>
 #include <chrono>
 #include <string>
-#include <jsoncpp/json/json.h>
+#include <json/json.h>
 #include <papi.h>
 #include "../../include/matrix.hpp"
 #include "../../include/matmul.hpp"

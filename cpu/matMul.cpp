@@ -97,7 +97,7 @@ int main() {
         out_results["avx2"][std::to_string(N)]["error"] = matrix::compare(matE, matC, N, N);
 
         // AVX512
-        /*time = 0.0;
+        time = 0.0;
         for ( size_t i = 0; i < iter; i++ ) {
             matrix::init_zero(matF, N, N);
             t1 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
@@ -109,7 +109,7 @@ int main() {
         //std::cout << std::setw(14) << std::fixed << std::setprecision(4) << "avx512 (ms): " << (double)std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()/1000.0f/iter << "\n";
         out_results["avx512"][std::to_string(N)]["time"] = (time)/iter;
         out_results["avx512"][std::to_string(N)]["error"] = matrix::compare(matF, matC, N, N);
-        */
+        
 
         // MKL
         time = 0.0;

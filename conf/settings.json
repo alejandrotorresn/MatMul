@@ -1,6 +1,6 @@
 {
     "path":"../data/",
-    "iterations":5,
+    "iterations":10,
     "sizes":[
         {"N":32},
         {"N":48},
